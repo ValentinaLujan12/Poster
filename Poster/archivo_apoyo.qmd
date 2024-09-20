@@ -11,9 +11,13 @@ editor: source
 
 El presente archivo tiene como finalidad mostrar a profundidad cada uno de los videos utilizados para realizar el **analisis de crecimiento bacterial y de hongos** y las respectivas gráficas generadas en base a la información extraida de estos.
 
+Estos videos muestran el crecimiento de bacterias y hongos en alta resolución mediante una técnica de time-lapse. A lo largo de cada video, se observa cómo estos organismos se expanden, interactúan y cambian de forma y color, ofreciendo una vista microscópica del comportamiento de estos microorganismos.
+
+Estos videos fueron extraidos de la siguiente ubicación:
+Van Eck, W. (n.d.). Wim van Eck [Canal de YouTube]. YouTube. https://www.youtube.com/@wimecktube
+
 ## **Video 1**
 
-El video titulado "Bacteria and fungi time-lapse 9 (4K)" muestra el crecimiento de bacterias y hongos en alta resolución mediante una técnica de time-lapse. A lo largo del video, se observa cómo estos organismos se expanden, interactúan y cambian de forma y color, ofreciendo una vista microscópica del comportamiento de estos microorganismos.
 
 ```{r, results='asis', echo=FALSE}
 library(htmltools)
@@ -24,20 +28,17 @@ tags$video(src = video_path, type = "video/mp4", controls = NA, width = "600", h
 ```
 
 
-
-
 Ahora, para observar su crecimiento, podemos ver la siguiente gráfica:
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-library(ggplot2)
 library(EBImage)
 
 # Parámetros
 milimetros_por_pixel <- 0.021167  # Escala obtenida a partir de 1200 dpi
 
 # Crear la secuencia de números con incrementos de 30
-indices <- seq(from = 0, to = 1950, by = 30)
+indices <- seq(from = 0, to = 1620, by = 30)
 
 # Crear los nombres de los archivos
 imagenes <- paste0("Video1/imagenes_bacteria", "/", "frame_", indices, ".png")
@@ -80,15 +81,17 @@ for (i in seq_along(imagenes)) {
 }
 
 
-ggplot(resultados_or, aes(x = Tiempo)) +
+library(ggplot2)
+library(plotly)
+g1 <- ggplot(resultados_or, aes(x = Tiempo)) +
   # Líneas sólidas tanto para el perímetro como el área
-  geom_line(aes(y = Perimetro, color = "Perímetro"), size = 1.5) +
-  geom_line(aes(y = Area, color = "Área"), size = 1.5) +
+  geom_line(aes(y = Perimetro, color = "Perímetro"), linewidth = 1.5) +
+  geom_line(aes(y = Area, color = "Área"), linewidth = 1.5) +
   
   # Escalas adecuadas para el perímetro y el área
   scale_y_continuous(
-    name = "Perímetro (milimetros)",
-    sec.axis = sec_axis(~., name = "Área (milimetros cuadrados)")
+    name = "Perímetro (milímetros)",
+    sec.axis = sec_axis(~., name = "Área (milímetros cuadrados)")
   ) +
   
   # Títulos y etiquetas
@@ -121,5 +124,352 @@ ggplot(resultados_or, aes(x = Tiempo)) +
     panel.background = element_rect(fill = "#ffffff")  # Fondo de panel blanco
   )
 
+g1 <- ggplotly(g1)
+
+g1
+
 ```
 
+## **Video 2**
+
+
+```{r, results='asis', echo=FALSE}
+library(htmltools)
+
+# Incrustar el video directamente en el HTML
+video_path <- "Video2/video_bacteria.mp4"  # O la URL de YouTube o el servidor donde está alojado
+tags$video(src = video_path, type = "video/mp4", controls = NA, width = "600", height = "400")
+```
+
+
+Ahora, para observar su crecimiento, podemos ver la siguiente gráfica:
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(EBImage)
+
+# Parámetros
+milimetros_por_pixel <- 0.021167  # Escala obtenida a partir de 1200 dpi
+
+
+indices <- seq(from = 0, to = 1950, by = 30)
+
+imagenes <- paste0("Video2/imagenes_bacteria", "/", "frame_", indices, ".png")
+# Crear un dataset vacío
+resultados_or <- data.frame(Tiempo = numeric(),
+                         Perimetro = numeric(),
+                         Area = numeric())
+
+# Bucle a través de todas las imágenes
+for (i in seq_along(imagenes)) {
+  # Cargar la imagen usando EBImage
+  img <- readImage(imagenes[i])
+  
+  # Convertir a escala de grises
+  img_gray <- channel(img, "gray")
+  
+  # Binarizar la imagen
+  umbral <- otsu(img_gray) 
+  img_bin <- img_gray > umbral
+  
+  # Calcular el perímetro (píxeles en los bordes)
+  perimetro_img <- bwlabel(img_bin)
+  perimetro_pixels <- computeFeatures.shape(perimetro_img)[, "s.perimeter"]
+  
+  # Convertir el perímetro de píxeles a milimetros
+  perimetro_milimetros <- sum(perimetro_pixels) * milimetros_por_pixel
+  
+  # Calcular el área basada en el perímetro asumiendo forma circular
+  area_milimetros2 <- (perimetro_milimetros^2) / (4 * pi)
+  
+  # Calcular el tiempo en horas
+  tiempo_horas <- (i-1)*5 # Cada imagen representa 5 horas
+  
+  # Guardar los resultados en el dataset
+  resultados_or <- rbind(resultados_or, 
+                      data.frame(Imagen = imagenes[i],
+                                 Tiempo = tiempo_horas, 
+                                 Perimetro = perimetro_milimetros, 
+                                 Area = area_milimetros2))
+}
+
+library(ggplot2)
+library(plotly)
+g1 <- ggplot(resultados_or, aes(x = Tiempo)) +
+  # Líneas sólidas tanto para el perímetro como el área
+  geom_line(aes(y = Perimetro, color = "Perímetro"), linewidth = 1.5) +
+  geom_line(aes(y = Area, color = "Área"), linewidth = 1.5) +
+  
+  # Escalas adecuadas para el perímetro y el área
+  scale_y_continuous(
+    name = "Perímetro (milímetros)",
+    sec.axis = sec_axis(~., name = "Área (milímetros cuadrados)")
+  ) +
+  
+  # Títulos y etiquetas
+  labs(
+    title = "Crecimiento de la Bacteria a lo Largo del Tiempo",
+    subtitle = "Comparación entre el Perímetro y el Área",
+    x = "Tiempo (horas)"
+  ) +
+  
+  # Personalización de colores más vibrantes
+  scale_color_manual(
+    values = c("Perímetro" = "#0072B2", "Área" = "lightblue"),  # Azul vibrante y naranja intenso
+    name = "Medición"
+  ) +
+  
+  # Mejoras estéticas en el tema
+  theme_minimal(base_size = 15) +  # Base más grande para mejor legibilidad
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", family = "Arial"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, family = "Arial"),
+    axis.title.y.left = element_text(color = "#0072B2", size = 14, face = "bold"),
+    axis.title.y.right = element_text(color = "lightblue", size = 14, face = "bold"),
+    axis.text = element_text(size = 12, family = "Arial"),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray90"),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#f5f5f5"),  # Fondo claro
+    panel.background = element_rect(fill = "#ffffff")  # Fondo de panel blanco
+  )
+
+g1 <- ggplotly(g1)
+
+g1
+
+```
+
+
+## **Video 3**
+
+
+```{r, results='asis', echo=FALSE}
+library(htmltools)
+
+# Incrustar el video directamente en el HTML
+video_path <- "Video3/video_bacteria.mp4"  # O la URL de YouTube o el servidor donde está alojado
+tags$video(src = video_path, type = "video/mp4", controls = NA, width = "600", height = "400")
+```
+
+
+Ahora, para observar su crecimiento, podemos ver la siguiente gráfica:
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(EBImage)
+
+# Parámetros
+milimetros_por_pixel <- 0.021167  # Escala obtenida a partir de 1200 dpi
+
+# Crear la secuencia de números con incrementos de 30
+indices <- seq(from = 0, to = 1950, by = 30)
+
+# Crear los nombres de los archivos
+imagenes <- paste0("Video3/imagenes_bacteria", "/", "frame_", indices, ".png")
+# Crear un dataset vacío
+resultados_or <- data.frame(Tiempo = numeric(),
+                            Perimetro = numeric(),
+                            Area = numeric())
+
+# Bucle a través de todas las imágenes
+for (i in seq_along(imagenes)) {
+  # Cargar la imagen usando EBImage
+  img <- readImage(imagenes[i])
+  
+  # Convertir a escala de grises
+  img_gray <- channel(img, "gray")
+  
+  # Binarizar la imagen usando un umbral (ajusta si es necesario)
+  umbral <- otsu(img_gray) 
+  img_bin <- img_gray > umbral
+  
+  # Calcular el perímetro (píxeles en los bordes)
+  perimetro_img <- bwlabel(img_bin)
+  perimetro_pixels <- computeFeatures.shape(perimetro_img)[, "s.perimeter"]
+  
+  # Convertir el perímetro de píxeles a micrómetros
+  perimetro_milimetros <- sum(perimetro_pixels) * milimetros_por_pixel
+  
+  # Calcular el área basada en el perímetro asumiendo forma circular
+  area_milimetros2 <- (perimetro_milimetros^2) / (4 * pi)
+  
+  # Calcular el tiempo en horas
+  tiempo_horas <- (i-1)*5 # Cada imagen representa 5 horas
+  
+  # Guardar los resultados en el dataset
+  resultados_or <- rbind(resultados_or, 
+                         data.frame(Imagen = imagenes[i],
+                                    Tiempo = tiempo_horas, 
+                                    Perimetro = perimetro_milimetros, 
+                                    Area = area_milimetros2))
+}
+
+
+library(ggplot2)
+library(plotly)
+g1 <- ggplot(resultados_or, aes(x = Tiempo)) +
+  # Líneas sólidas tanto para el perímetro como el área
+  geom_line(aes(y = Perimetro, color = "Perímetro"), linewidth = 1.5) +
+  geom_line(aes(y = Area, color = "Área"), linewidth = 1.5) +
+  
+  # Escalas adecuadas para el perímetro y el área
+  scale_y_continuous(
+    name = "Perímetro (milímetros)",
+    sec.axis = sec_axis(~., name = "Área (milímetros cuadrados)")
+  ) +
+  
+  # Títulos y etiquetas
+  labs(
+    title = "Crecimiento de la Bacteria a lo Largo del Tiempo",
+    subtitle = "Comparación entre el Perímetro y el Área",
+    x = "Tiempo (horas)"
+  ) +
+  
+  # Personalización de colores más vibrantes
+  scale_color_manual(
+    values = c("Perímetro" = "#0072B2", "Área" = "lightblue"),  # Azul vibrante y naranja intenso
+    name = "Medición"
+  ) +
+  
+  # Mejoras estéticas en el tema
+  theme_minimal(base_size = 15) +  # Base más grande para mejor legibilidad
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", family = "Arial"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, family = "Arial"),
+    axis.title.y.left = element_text(color = "#0072B2", size = 14, face = "bold"),
+    axis.title.y.right = element_text(color = "lightblue", size = 14, face = "bold"),
+    axis.text = element_text(size = 12, family = "Arial"),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray90"),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#f5f5f5"),  # Fondo claro
+    panel.background = element_rect(fill = "#ffffff")  # Fondo de panel blanco
+  )
+
+g1 <- ggplotly(g1)
+
+g1
+
+```
+
+
+
+
+## **Video 4**
+
+
+```{r, results='asis', echo=FALSE}
+library(htmltools)
+
+# Incrustar el video directamente en el HTML
+video_path <- "Video4/video_bacteria.mp4"  # O la URL de YouTube o el servidor donde está alojado
+tags$video(src = video_path, type = "video/mp4", controls = NA, width = "600", height = "400")
+```
+
+
+Ahora, para observar su crecimiento, podemos ver la siguiente gráfica:
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(EBImage)
+
+# Parámetros
+milimetros_por_pixel <- 0.021167  # Escala obtenida a partir de 1200 dpi
+
+
+indices <- seq(from = 0, to = 1770, by = 30)
+
+imagenes <- paste0("Video4/imagenes_bacteria", "/", "frame_", indices, ".png")
+# Crear un dataset vacío
+resultados_or <- data.frame(Tiempo = numeric(),
+                         Perimetro = numeric(),
+                         Area = numeric())
+
+# Bucle a través de todas las imágenes
+for (i in seq_along(imagenes)) {
+  # Cargar la imagen usando EBImage
+  img <- readImage(imagenes[i])
+  
+  # Convertir a escala de grises
+  img_gray <- channel(img, "gray")
+  
+  # Binarizar la imagen
+  umbral <- otsu(img_gray) 
+  img_bin <- img_gray > umbral
+  
+  # Calcular el perímetro (píxeles en los bordes)
+  perimetro_img <- bwlabel(img_bin)
+  perimetro_pixels <- computeFeatures.shape(perimetro_img)[, "s.perimeter"]
+  
+  # Convertir el perímetro de píxeles a milimetros
+  perimetro_milimetros <- sum(perimetro_pixels) * milimetros_por_pixel
+  
+  # Calcular el área basada en el perímetro asumiendo forma circular
+  area_milimetros2 <- (perimetro_milimetros^2) / (4 * pi)
+  
+  # Calcular el tiempo en horas
+  tiempo_horas <- (i-1)*5 # Cada imagen representa 5 horas
+  
+  # Guardar los resultados en el dataset
+  resultados_or <- rbind(resultados_or, 
+                      data.frame(Imagen = imagenes[i],
+                                 Tiempo = tiempo_horas, 
+                                 Perimetro = perimetro_milimetros, 
+                                 Area = area_milimetros2))
+}
+
+library(ggplot2)
+library(plotly)
+g1 <- ggplot(resultados_or, aes(x = Tiempo)) +
+  # Líneas sólidas tanto para el perímetro como el área
+  geom_line(aes(y = Perimetro, color = "Perímetro"), linewidth = 1.5) +
+  geom_line(aes(y = Area, color = "Área"), linewidth = 1.5) +
+  
+  # Escalas adecuadas para el perímetro y el área
+  scale_y_continuous(
+    name = "Perímetro (milímetros)",
+    sec.axis = sec_axis(~., name = "Área (milímetros cuadrados)")
+  ) +
+  
+  # Títulos y etiquetas
+  labs(
+    title = "Crecimiento de la Bacteria a lo Largo del Tiempo",
+    subtitle = "Comparación entre el Perímetro y el Área",
+    x = "Tiempo (horas)"
+  ) +
+  
+  # Personalización de colores más vibrantes
+  scale_color_manual(
+    values = c("Perímetro" = "#0072B2", "Área" = "lightblue"),  # Azul vibrante y naranja intenso
+    name = "Medición"
+  ) +
+  
+  # Mejoras estéticas en el tema
+  theme_minimal(base_size = 15) +  # Base más grande para mejor legibilidad
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold", family = "Arial"),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, family = "Arial"),
+    axis.title.y.left = element_text(color = "#0072B2", size = 14, face = "bold"),
+    axis.title.y.right = element_text(color = "lightblue", size = 14, face = "bold"),
+    axis.text = element_text(size = 12, family = "Arial"),
+    legend.position = "top",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray90"),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "#f5f5f5"),  # Fondo claro
+    panel.background = element_rect(fill = "#ffffff")  # Fondo de panel blanco
+  )
+
+g1 <- ggplotly(g1)
+
+g1
+
+```
