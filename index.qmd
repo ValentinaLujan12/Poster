@@ -20,7 +20,7 @@ Van Eck, W. (n.d.). Wim van Eck [Canal de YouTube]. YouTube. https://www.youtube
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 # Instalar y cargar paquetes y librerías
-paquetes <- c("htmltools", "EBImage", "ggplot2", "plotly", "stringr")
+paquetes <- c("htmltools", "EBImage", "ggplot2", "plotly", "stringr", "dplyr")
 lapply(paquetes, function(x) {
   if (!require(x, character.only = TRUE)) {
     install.packages(x)
@@ -234,9 +234,6 @@ resultados_3 <- analizar_crecimiento_bacteria("video_3/imagenes_bacteria", 1950,
 crear_grafica(resultados_3)
 ```
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-
-```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 crear_modelo_exponencial <- function(datos) {
@@ -287,3 +284,124 @@ grafico_logistico_4 <- grafico_modelo(modelo_4)
 
 grafico_logistico_4
 ```
+
+
+En la siguiente gráfica podrá observar el área obtenida de cada video y realizar una comparación más completa de los valores obtenidos en cada uno de ellos.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Función para normalizar los datos
+normalizar <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
+
+# Combinar los datos de los diferentes videos
+datos_combinados <- bind_rows(
+  resultados_1 %>% mutate(Video = "Video 1"),
+  resultados_2 %>% mutate(Video = "Video 2"),
+  resultados_3 %>% mutate(Video = "Video 3"),
+  resultados_4 %>% mutate(Video = "Video 4")
+)
+
+# Aplicar la normalización a los datos de área
+datos_combinados <- datos_combinados %>%
+  group_by(Video) %>%
+  mutate(Area_normalizada = normalizar(Area))
+
+# Función para crear la gráfica con tonos de azul
+crear_grafica_normalizada <- function(data) {  
+  g <- ggplot(data, aes(x = Tiempo, y = Area_normalizada, color = Video)) +
+    geom_line(linewidth = 1.5) +  
+    labs(
+      title = "Comparación de Áreas entre los 4 Videos",
+      subtitle = "Crecimiento del microorganismo en función del área",
+      x = "Tiempo (horas)",
+      y = "Área Normalizada (escala 0 a 1)"
+    ) +
+    scale_color_manual(
+      values = c("Video 1" = "#003f5c",  # Azul oscuro profundo
+                 "Video 2" = "#0072B2",  # Azul mediano
+                 "Video 3" = "lightblue",  # Azul-violeta suave
+                 "Video 4" = "gray"), # Azul lavanda 
+      name = "Video"
+    ) +
+    theme_minimal(base_size = 15) +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 20, face = "bold", family = "Arial"),
+      plot.subtitle = element_text(hjust = 0.5, size = 14, family = "Arial"),
+      axis.title = element_text(size = 14, family = "Arial"),
+      axis.text = element_text(size = 12, family = "Arial"),
+      legend.position = "top",
+      legend.title = element_blank(),
+      legend.text = element_text(size = 14),
+      panel.grid.major = element_line(color = "gray90"),
+      panel.grid.minor = element_blank(),
+      plot.background = element_rect(fill = "#f5f5f5"),
+      panel.background = element_rect(fill = "#ffffff")
+    )
+  
+  return(ggplotly(g))
+}
+
+# Graficar los datos normalizados con tonos de azul
+crear_grafica_normalizada(datos_combinados)
+
+
+```
+
+Ahora, en la siguiente gráfica podrá observar la comparación del modelo logistico obtenido para cada video.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Filtrar solo los datos del modelo y combinar los datos de los videos
+datos_modelos_combinados <- bind_rows(
+  filter(modelo_1, Tipo == "Modelo") %>% mutate(Video = "Video 1"),
+  filter(modelo_2, Tipo == "Modelo") %>% mutate(Video = "Video 2"),
+  filter(modelo_3, Tipo == "Modelo") %>% mutate(Video = "Video 3"),
+  filter(modelo_4, Tipo == "Modelo") %>% mutate(Video = "Video 4")
+)
+
+# Normalizar los datos de área predicha para cada video
+datos_modelos_combinados <- datos_modelos_combinados %>%
+  group_by(Video) %>%
+  mutate(Area_normalizada = normalizar(Valor)) %>%
+  ungroup()
+
+# Función para crear la gráfica con los datos normalizados del modelo logístico
+crear_grafica_modelo_normalizada <- function(data) {
+  g <- ggplot(data, aes(x = Tiempo, y = Area_normalizada, color = Video)) +
+    geom_line(linewidth = 1.5) +
+    labs(
+      title = "Comparación del Modelo Logístico entre los 4 Videos",
+      subtitle = "Crecimiento del microorganismo (Área normalizada)",
+      x = "Tiempo (horas)",
+      y = "Área Normalizada (escala 0 a 1)"
+    ) +
+    scale_color_manual(
+      values = c("Video 1" = "#003f5c",
+                 "Video 2" = "#0072B2",
+                 "Video 3" = "lightblue",
+                 "Video 4" = "gray"),
+      name = "Video"
+    ) +
+    theme_minimal(base_size = 15) +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 20, face = "bold", family = "Arial"),
+      plot.subtitle = element_text(hjust = 0.5, size = 14, family = "Arial"),
+      axis.title = element_text(size = 14, family = "Arial"),
+      axis.text = element_text(size = 12, family = "Arial"),
+      legend.position = "top",
+      legend.title = element_blank(),
+      legend.text = element_text(size = 14),
+      panel.grid.major = element_line(color = "gray90"),
+      panel.grid.minor = element_blank(),
+      plot.background = element_rect(fill = "#f5f5f5"),
+      panel.background = element_rect(fill = "#ffffff")
+    )
+  
+  return(ggplotly(g))
+}
+
+# Graficar los datos normalizados del modelo logístico
+crear_grafica_modelo_normalizada(datos_modelos_combinados)
+
+```
+
