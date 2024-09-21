@@ -235,7 +235,36 @@ crear_grafica(resultados_3)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
 ```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+crear_modelo_exponencial <- function(datos) {
+  modelo_exponencial <- nls(Area ~ A * exp(B * Tiempo), 
+                            data = datos, 
+                            start = list(A = min(datos$Area), B = 0.01), 
+                            control = list(minFactor = 1e-10, maxiter = 200))
+  
+  # Crear un data frame con las predicciones del modelo
+  predicciones <- data.frame(Tiempo = datos$Tiempo, Area_modelo = predict(modelo_exponencial))
+  
+  # Combinar los datos originales con las predicciones
+  datos_combinados <- rbind(
+    data.frame(Tiempo = datos$Tiempo, Valor = datos$Area, Tipo = "Observado"),
+    data.frame(Tiempo = predicciones$Tiempo, Valor = predicciones$Area_modelo, Tipo = "Modelo")
+  )
+  
+  return(datos_combinados)
+}
+
+modelo_3 <- crear_modelo_exponencial(resultados_3)
+
+grafico_logistico_3 <- grafico_modelo(modelo_3)
+
+grafico_logistico_3
+
+```
+
 
 ## **Video 4**
 
