@@ -1,0 +1,260 @@
+---
+title: "Visualización de los videos y gráficas"
+author: "Por: Jimena Hernández Castillo - Valentina Luján Robledo - Juan Esteban Cadavid Arango - Alejandro Orozco Ochoa"
+lang: es
+output: 
+  html_document:
+    toc: true
+    embed-resources: true
+editor: source
+---
+
+El presente archivo tiene como finalidad mostrar a profundidad cada uno de los videos utilizados para realizar el **analisis de crecimiento bacterial y de hongos** y las respectivas gráficas generadas en base a la información extraida de estos.
+
+Estos videos muestran el crecimiento de bacterias y hongos en alta resolución mediante una técnica de time-lapse. A lo largo de cada video, se observa cómo estos organismos se expanden, interactúan y cambian de forma y color, ofreciendo una vista microscópica del comportamiento de estos microorganismos.
+
+Estos videos fueron extraidos de la siguiente ubicación:
+Van Eck, W. (n.d.). Wim van Eck [Canal de YouTube]. YouTube. https://www.youtube.com/@wimecktube
+
+## **Video 1**
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+# Instalar y cargar paquetes y librerías
+paquetes <- c("htmltools", "EBImage", "ggplot2", "plotly", "stringr")
+lapply(paquetes, function(x) {
+  if (!require(x, character.only = TRUE)) {
+    install.packages(x)
+    library(x, character.only = TRUE)
+  }
+})
+```
+
+```{r, results='asis', echo=FALSE}
+# Función para incrustar un video en HTML
+incrustar_video <- function(video_path) {
+  tags$video(src = video_path, type = "video/mp4", controls = NA, width = "600", height = "400")
+}
+
+incrustar_video("video_1/video_bacteria.mp4")
+```
+
+Ahora, para observar su crecimiento, podemos ver la siguiente gráfica:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+analizar_crecimiento_bacteria <- function(video_path, indice_sup, umbral_valor, otsu = FALSE, horas) {
+  milimetros_por_pixel <- 0.021162  # Escala obtenida a partir de 1200 dpi
+  
+  # Extraer el número del video de la ruta
+  video_num <- sub("video_(\\d+)/.*", "\\1", video_path)
+
+  # Crear los índices de las imágenes
+  indices <- seq(from = 0, to = indice_sup, by = 30)
+  
+  # Generar la lista de imágenes
+  imagenes <- paste0(video_path, "/", "frame_", indices, ".png")
+  
+  # Crear un dataset vacío
+  resultados <- data.frame(Tiempo = numeric(),
+                           Perimetro = numeric(),
+                           Area = numeric())
+  
+  # Bucle a través de todas las imágenes
+  for (i in seq_along(imagenes)) {
+    # Cargar la imagen usando EBImage
+    img <- readImage(imagenes[i])
+    
+    # Convertir a escala de grises
+    img_gray <- channel(img, "gray")
+    
+    # Binarizar la imagen usando Otsu o el umbral dado
+    if (otsu) {
+      umbral <- otsu(img_gray)
+      img_bin <- img_gray > umbral
+    } else {
+      img_bin <- img_gray > umbral_valor
+    }
+    
+    # Calcular el perímetro (píxeles en los bordes)
+    perimetro_img <- bwlabel(img_bin)
+    perimetro_pixels <- computeFeatures.shape(perimetro_img)[, "s.perimeter"]
+    
+    # Convertir el perímetro de píxeles a milimetros
+    perimetro_milimetros <- sum(perimetro_pixels) * milimetros_por_pixel
+    
+    # Calcular el área basada en el perímetro asumiendo forma circular
+    area_milimetros2 <- (perimetro_milimetros^2) / (4 * pi)
+    
+    # Calcular el tiempo en horas
+    tiempo_horas <- (i - 1) * horas  # Cada imagen representa un intervalo de tiempo en horas
+    
+    # Guardar los resultados en el dataset
+    resultados <- rbind(resultados, 
+                        data.frame(Imagen = imagenes[i],
+                                   Tiempo = tiempo_horas, 
+                                   Perimetro = perimetro_milimetros, 
+                                   Area = area_milimetros2))
+  }
+  return(resultados)
+}
+
+crear_grafica <- function(data) {  
+  num <- as.numeric(str_extract(deparse(substitute(data)), "\\d+$"))
+  # Crear el gráfico
+  g <- ggplot(data, aes(x = Tiempo)) +
+    # Líneas sólidas tanto para el perímetro como el área
+    geom_line(aes(y = Perimetro, color = "Perímetro"), linewidth = 1.5) +
+    geom_line(aes(y = Area, color = "Área"), linewidth = 1.5) +
+    
+    # Escalas adecuadas para el perímetro y el área
+    scale_y_continuous(
+      name = "Perímetro (milímetros)",
+      sec.axis = sec_axis(~., name = "Área (milímetros cuadrados)")
+    ) +
+    
+    # Títulos y etiquetas
+    labs(
+      title = paste("Crecimiento del microorganismo", num),
+      subtitle = "Comparación entre el Perímetro y el Área",
+      x = "Tiempo (horas)"
+    ) +
+    
+    # Personalización de colores más vibrantes
+    scale_color_manual(
+      values = c("Perímetro" = "#0072B2", "Área" = "lightblue"),  # Azul vibrante y naranja intenso
+      name = "Medición"
+    ) +
+    
+    # Mejoras estéticas en el tema
+    theme_minimal(base_size = 15) +  # Base más grande para mejor legibilidad
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 20, face = "bold", family = "Arial"),
+      plot.subtitle = element_text(hjust = 0.5, size = 14, family = "Arial"),
+      axis.title.y.left = element_text(color = "#0072B2", size = 14, face = "bold"),
+      axis.title.y.right = element_text(color = "lightblue", size = 14, face = "bold"),
+      axis.text = element_text(size = 12, family = "Arial"),
+      legend.position = "top",
+      legend.title = element_blank(),
+      legend.text = element_text(size = 14),
+      panel.grid.major = element_line(color = "gray90"),
+      panel.grid.minor = element_blank(),
+      plot.background = element_rect(fill = "#f5f5f5"),  # Fondo claro
+      panel.background = element_rect(fill = "#ffffff")  # Fondo de panel blanco
+    )
+  
+  # Devolver el gráfico interactivo
+  return(ggplotly(g))
+}
+
+resultados_1 <- analizar_crecimiento_bacteria("video_1/imagenes_bacteria", 1500, 0.1, FALSE, 2.5)
+
+crear_grafica(resultados_1)
+```
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+#Función para el modelo logístico
+crear_modelo_logistico <- function(datos) {
+modelo_logistico <- nls(Area ~ K / (1 + ((K - A) / A) * exp(-B * Tiempo)), data = datos, start = list(K = max(datos$Area), A = 1, B = 0.1))
+
+# Crear un data frame con las predicciones del modelo
+predicciones <- data.frame(Tiempo = datos$Tiempo, Area_modelo = predict(modelo_logistico))
+
+# Combinar los datos originales con las predicciones
+datos_combinados <- rbind(
+  data.frame(Tiempo = datos$Tiempo, Valor = datos$Area, Tipo = "Observado"),
+  data.frame(Tiempo = predicciones$Tiempo, Valor = predicciones$Area_modelo, Tipo = "Modelo")
+)
+
+return(datos_combinados)
+}
+
+grafico_modelo <- function(datos, modelo="logístico") {
+  num <- as.numeric(str_extract(deparse(substitute(datos)), "\\d+$"))
+  
+  g <- ggplot(datos, aes(x = Tiempo, y = Valor, color = Tipo)) +
+  geom_line(size = 1.2) +
+  labs(
+    title = paste("Crecimiento del microorganismo", num, "con modelo", modelo),
+    x = "Tiempo (horas)",
+    y = "Área (mm^2)"
+  ) +
+  scale_color_manual(values = c("Observado" = "blue", "Modelo" = "red")) +
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(hjust = 0.5)
+  ) -> p
+
+# Devolver el gráfico interactivo
+  return(ggplotly(g))
+}
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+modelo_1 <- crear_modelo_logistico(resultados_1)
+
+grafico_logistico_1 <- grafico_modelo(modelo_1)
+
+grafico_logistico_1
+```
+
+## **Video 2**
+
+```{r, results='asis', echo=FALSE}
+incrustar_video("video_2/video_bacteria.mp4")
+```
+
+Ahora, para observar su crecimiento, podemos ver la siguiente gráfica:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+resultados_2 <- analizar_crecimiento_bacteria("video_2/imagenes_bacteria", 1950,otsu=TRUE, horas=5)
+
+crear_grafica(resultados_2)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+modelo_2 <- crear_modelo_logistico(resultados_2)
+
+grafico_logistico_2 <- grafico_modelo(modelo_2)
+
+grafico_logistico_2
+```
+
+## **Video 3**
+
+```{r, results='asis', echo=FALSE}
+incrustar_video("video_3/video_bacteria.mp4")
+```
+
+Ahora, para observar su crecimiento, podemos ver la siguiente gráfica:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+resultados_3 <- analizar_crecimiento_bacteria("video_3/imagenes_bacteria", 1950,otsu=TRUE, horas=5)
+
+crear_grafica(resultados_3)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```
+
+## **Video 4**
+
+```{r, results='asis', echo=FALSE}
+incrustar_video("video_4/video_bacteria.mp4")
+```
+
+Ahora, para observar su crecimiento, podemos ver la siguiente gráfica:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+resultados_4 <- analizar_crecimiento_bacteria("video_4/imagenes_bacteria", 2160,0.11, FALSE, 2.5)
+
+crear_grafica(resultados_4)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+modelo_4 <- crear_modelo_logistico(resultados_4)
+
+grafico_logistico_4 <- grafico_modelo(modelo_4)
+
+grafico_logistico_4
+```
