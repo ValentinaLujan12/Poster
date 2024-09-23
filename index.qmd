@@ -130,6 +130,8 @@ crear_grafica(resultados_1)
 
 Este modelo es adecuado para describir procesos de crecimiento biológico, ya que representa de manera realista la fase de **crecimiento exponencial** inicial, seguida de una **desaceleración** a medida que se alcanzan los límites de recursos o espacio disponibles, hasta llegar a una fase de **estabilización** en la que el crecimiento se detiene. Matemáticamente, el modelo logístico se describe mediante una función sigmoide, que permite ajustar los datos de crecimiento a una curva suave, evitando las fluctuaciones bruscas observadas en las mediciones directas.
 
+Si desea profundizar en este y otros modelos, recomendamos el libro [Introducción a los modelos matemáticos de crecimiento con aplicaciones en sistemas biológicos](http://www.sisal.unam.mx/labeco/LAB_ECOLOGIA/Produccion_academica_de_Xavier_files/PAPIME_Manual_Modelos.pdf) de la Universidad Autónoma de México.
+
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 crear_modelo_logistico <- function(datos) {
 modelo_logistico <- nls(Area ~ K / (1 + ((K - A) / A) * exp(-B * Tiempo)), data = datos, start = list(K = max(datos$Area), A = 1, B = 0.1))
