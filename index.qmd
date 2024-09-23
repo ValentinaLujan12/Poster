@@ -291,11 +291,19 @@ datos_modelos_combinados <- datos_modelos_combinados %>%
   ungroup()
 
 crear_grafica_modelo_normalizada <- function(data) {
-  g <- ggplot(data, aes(x = Tiempo, y = Area_normalizada, color = Video)) +
+  data <- data %>%
+    group_by(Video) %>%
+    mutate(
+      Area_normalizada = normalizar(Valor),
+      Tiempo_normalizado = normalizar(Tiempo)
+    ) %>%
+    ungroup()
+
+  g <- ggplot(data, aes(x = Tiempo_normalizado, y = Area_normalizada, color = Video)) +
     geom_line(linewidth = 1.2) +
     labs(
-      title = "Comparación del Modelo Logístico",
-      x = "Tiempo (horas)",
+      title = "Comparación - Modelo Logístico Normalizado",
+      x = "Tiempo Normalizado (escala 0 a 1)",
       y = "Área Normalizada (escala 0 a 1)"
     ) +
     scale_color_manual(
@@ -317,7 +325,6 @@ crear_grafica_modelo_normalizada <- function(data) {
 
 crear_grafica_modelo_normalizada(datos_modelos_combinados)
 ```
-
 
 Aunque ambos hongos pertenecen al mismo grupo (reino Fungi), sus patrones de crecimiento son muy diferentes. El hongo del video 1 crece rápidamente y se estabiliza, mientras que el del video 4 tiene un crecimiento más lento, lo que podría estar relacionado con diferencias en las especies o en las condiciones del experimento. 
 
