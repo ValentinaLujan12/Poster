@@ -90,7 +90,7 @@ crear_grafica <- function(datos) {
      scale_color_manual(
       values = c("Perímetro" = "#0072B2", "Área" = "lightblue")) +
   labs(title = paste("Evolución del microorganismo", num, "en el Tiempo"),
-       x = "Tiempo",
+       x = "Tiempo(horas)",
        y = "Perímetro (mm) - Área (mm^2)",
        color = "Medición") +
   theme_minimal(base_size = 12) +
@@ -100,7 +100,10 @@ crear_grafica <- function(datos) {
       panel.background = element_rect(fill = "white"),
       panel.grid.major = element_line(color = "lightgray")
     )
-  return(ggplotly(g))
+  g_interactivo <- ggplotly(g, tooltip = c("x", "y"))|>
+    style(hoverinfo = "x+y",
+          texts = paste0("y: ", round(eval(as.name("y")), 3)))
+  return(g_interactivo)
 }
 
 resultados_1 <- analizar_crecimiento_bacteria("video_1/imagenes_bacteria", 1500, 0.1, FALSE, 2.5)

@@ -1,7 +1,7 @@
 import yt_dlp
 
 # Enlace del video
-video_url = 'https://www.youtube.com/watch?v=DIN312pQsD4&list=PL2iUgLmO20Ul4GwCMy4Kj79CDFZBHYjfg&index=6'
+video_url = 'https://www.youtube.com/watch?v=j3qcSfdFPU4&list=PL2iUgLmO20Ul4GwCMy4Kj79CDFZBHYjfg&index=1
 
 # Configuración de descarga
 ydl_opts = {
