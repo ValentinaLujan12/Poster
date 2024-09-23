@@ -90,7 +90,7 @@ crear_grafica <- function(datos) {
      scale_color_manual(
       values = c("Perímetro" = "#0072B2", "Área" = "lightblue")) +
   labs(title = paste("Evolución del microorganismo", num, "en el Tiempo"),
-       x = "Tiempo(horas)",
+       x = "Tiempo (horas)",
        y = "Perímetro (mm) - Área (mm^2)",
        color = "Medición") +
   theme_minimal(base_size = 12) +
@@ -100,16 +100,17 @@ crear_grafica <- function(datos) {
       panel.background = element_rect(fill = "white"),
       panel.grid.major = element_line(color = "lightgray")
     )
-  g_interactivo <- ggplotly(g, tooltip = c("x", "y"))|>
-    style(hoverinfo = "x+y",
-          texts = paste0("y: ", round(eval(as.name("y")), 3)))
-  return(g_interactivo)
+  return(ggplotly(g))
 }
 
 resultados_1 <- analizar_crecimiento_bacteria("video_1/imagenes_bacteria", 1500, 0.1, FALSE, 2.5)
 
 crear_grafica(resultados_1)
 ```
+
+En la gráfica presentada anteriormente, se observan **picos inusuales** en las mediciones de área y perímetro a lo largo del tiempo, que podrían deberse a **imprecisiones** en la metodología utilizada para calcular estas variables. Por lo que para obtener una representación más precisa, clara y consistente del crecimiento del microorganismo a lo largo del tiempo, se decidió utilizar un **modelo logístico**.
+
+Este modelo es adecuado para describir procesos de crecimiento biológico, ya que representa de manera realista la fase de **crecimiento exponencial** inicial, seguida de una **desaceleración** a medida que se alcanzan los límites de recursos o espacio disponibles, hasta llegar a una fase de **estabilización** en la que el crecimiento se detiene. Matemáticamente, el modelo logístico se describe mediante una función sigmoide, que permite ajustar los datos de crecimiento a una curva suave, evitando las fluctuaciones bruscas observadas en las mediciones directas.
 
 ```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 crear_modelo_logistico <- function(datos) {
@@ -147,9 +148,6 @@ grafico_modelo <- function(datos) {
 }
 ```
 
-En la gráfica presentada anteriormente, se observan **picos inusuales** en las mediciones de área y perímetro a lo largo del tiempo, que podrían deberse a **imprecisiones** en la metodología utilizada para calcular estas variables. Por lo que para obtener una representación más precisa, clara y consistente del crecimiento del microorganismo a lo largo del tiempo, se decidió utilizar un **modelo logístico**.
-
-Este modelo es adecuado para describir procesos de crecimiento biológico, ya que representa de manera realista la fase de **crecimiento exponencial** inicial, seguida de una **desaceleración** a medida que se alcanzan los límites de recursos o espacio disponibles, hasta llegar a una fase de **estabilización** en la que el crecimiento se detiene. Matemáticamente, el modelo logístico se describe mediante una función sigmoide, que permite ajustar los datos de crecimiento a una curva suave, evitando las fluctuaciones bruscas observadas en las mediciones directas.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 modelo_1 <- crear_modelo_logistico(resultados_1)
@@ -158,6 +156,10 @@ grafico_logistico_1 <- grafico_modelo(modelo_1)
 
 grafico_logistico_1
 ```
+
+
+De ambas gráficas, podemos concluir que este hongo tiene un crecimiento muy rápido, alcanzando casi el 100% de su área máxima en un corto periodo de tiempo (menos de 100 horas).Es probable que este hongo sea una especie con una fase exponencial de crecimiento muy corta, lo que sugiere que se adapta rápidamente a su entorno y agota los recursos o alcanza una fase estacionaria en poco tiempo.
+
 
 ## **[Video 2](https://www.youtube.com/watch?v=384OMN1ue-8)**
 
@@ -184,6 +186,9 @@ grafico_logistico_2 <- grafico_modelo(modelo_2)
 
 grafico_logistico_2
 ```
+
+De ambas gráficas, podemos concluir que esta bacteria muestra un inicio de crecimiento más lento en comparación con el hongo del video 1, pero acelera su tasa de crecimiento alrededor de las 100 horas y alcanza su área máxima cerca de las 250 horas.El comportamiento de esta bacteria sugiere una fase de crecimiento más prolongada y sostenida, posiblemente debido a una mejor gestión de los recursos o condiciones ambientales más estables para su desarrollo.
+
 
 ## **[Video 3](https://www.youtube.com/watch?v=DGl5uFsZ6Kk)**
 
@@ -230,7 +235,10 @@ grafico_logistico_3
 
 ```
 
-## **[Video 4](https://www.youtube.com/watch?v=DIN312pQsD4)**
+De ambas gráficas, podemos concluir que la bacteria presente en el video 3 tiene el crecimiento más lento de los cuatro microorganismos, alcanzando su área máxima cerca de las 300 horas. Su crecimiento progresivo y prolongado indica que esta bacteria tiene una fase de adaptación más larga y un crecimiento logarítmico más moderado en comparación con el video 2. Esto podría indicar que esta bacteria necesita más tiempo para adaptarse o que sus condiciones de crecimiento son menos favorables.
+
+
+## **[Video 4](https://www.youtube.com/watch?v=j3qcSfdFPU4)**
 
 Este video muestra el creciemiento de un microorganismo de la especie fungi, el cual fue tomado con las mismas especificaciones del video 1; **2560x1440 píxeles**, **1200 dpi**, intervalos de **5 minutos** entre cada imagen, y un **segundo** de reproducción equivalente a **2,5 horas** de crecimiento en tiempo real. 
 
@@ -255,6 +263,9 @@ grafico_logistico_4 <- grafico_modelo(modelo_4)
 
 grafico_logistico_4
 ```
+
+De ambas gráficas, podemos concluir que el hongo en el video 4 tiene un crecimiento más lento en comparación con los microorganismos de los videos 1 y 2, pero más rápido que el microorganismo del video 3. Alcanza su área máxima cerca de las 200 horas, lo que sugiere que este hongo tiene una fase de crecimiento moderada y sostenida, similar al microorganismo del video 2. Esto podría indicar que este hongo tiene una fase de crecimiento más prolongada y sostenida, posiblemente debido a una mejor gestión de los recursos o condiciones ambientales más estables para su desarrollo.
+
 
 ## **Comparación**
 
@@ -304,4 +315,13 @@ crear_grafica_modelo_normalizada <- function(data) {
 
 crear_grafica_modelo_normalizada(datos_modelos_combinados)
 ```
+
+
+Aunque ambos hongos pertenecen al mismo grupo (reino Fungi), sus patrones de crecimiento son muy diferentes. El hongo del video 1 crece rápidamente y se estabiliza, mientras que el del video 4 tiene un crecimiento más lento, lo que podría estar relacionado con diferencias en las especies o en las condiciones del experimento. 
+
+Por otro lado, las bacterias del video 2 y 3 muestran patrones de crecimiento progresivos, pero a diferentes velocidades. El video 2 indica una bacteria que puede aprovechar mejor los recursos y crecer más rápido, mientras que la bacteria del video 3 parece tener un crecimiento más lento y sostenido, lo que sugiere una posible ventaja en ambientes más estables o con limitación de recursos.
+
+El hongo en el video 1 y la bacteria en el video 2 parecen ser los más eficientes en términos de crecimiento, alcanzando rápidamente su área máxima. En cambio, los microorganismos del video 3 y video 4 demuestran un crecimiento más pausado, lo que podría ser una estrategia adaptativa en condiciones distintas.
+
+En general, esta comparación subraya la diversidad en las estrategias de crecimiento entre hongos y bacterias, con algunos organismos maximizando el crecimiento temprano y otros optimizandolo para una expansión más sostenida a lo largo del tiempo.
 
